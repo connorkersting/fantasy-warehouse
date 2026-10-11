@@ -1,0 +1,77 @@
+version: 2
+
+sources:
+  - name: fantasy_season
+    description: >
+      CSV outputs of the fantasy-season pipeline, read in place from FANTASY_SEASON_DIR
+      (default ../fantasy-season). Nothing is copied into this repo: the upstream data includes
+      private league payloads and licensed rankings. Column contracts are pinned in
+      seeds/expected_source_columns.csv and checked by tests/assert_source_columns_match_contract.sql.
+    tables:
+      - name: replay_lineups
+        description: One row per league x week x snapshot slot. Replayed lineup decision vs platform and hindsight.
+        meta:
+          external_location: "read_csv('{{ env_var('FANTASY_SEASON_DIR', '../fantasy-season') }}/state/replay/*/w*_lineups.csv', header=true, nullstr='NA', union_by_name=true, filename=true)"
+        tests:
+          - unique_combination_of_columns:
+              arguments: {combination_of_columns: [season, week, league, slot]}
+        columns:
+          - name: season
+            tests: [not_null]
+          - name: week
+            tests: [not_null]
+          - name: league
+            tests: [not_null]
+          - name: slot
+            tests: [not_null]
+
+      - name: replay_proj_error
+        description: One row per league x week x snapshot slot x player x projection source. Projection vs actual points.
+        meta:
+          external_location: "read_csv('{{ env_var('FANTASY_SEASON_DIR', '../fantasy-season') }}/state/replay/*/w*_proj_error.csv', header=true, nullstr='NA', union_by_name=true, filename=true)"
+        tests:
+          - unique_combination_of_columns:
+              arguments: {combination_of_columns: [season, week, league, slot, player_key, source]}
+        columns:
+          - name: player_key
+            tests: [not_null]
+          - name: source
+            tests: [not_null]
+
+      - name: replay_rank_accuracy
+        description: One row per league x week x snapshot slot x position x source. Spearman rho of projected vs actual rank.
+        meta:
+          external_location: "read_csv('{{ env_var('FANTASY_SEASON_DIR', '../fantasy-season') }}/state/replay/*/w*_rank_accuracy.csv', header=true, nullstr='NA', union_by_name=true, filename=true)"
+        tests:
+          - unique_combination_of_columns:
+              arguments: {combination_of_columns: [season, week, league, slot, pos, source]}
+
+      - name: health_log
+        description: Append-only. One row per pipeline run x fetched source x league (league blank for global sources).
+        meta:
+          external_location: "read_csv('{{ env_var('FANTASY_SEASON_DIR', '../fantasy-season') }}/state/health/health_log.csv', header=true, nullstr='NA', filename=true)"
+        loaded_at_field: ts_utc
+        freshness:
+          warn_after: {count: 26, period: hour}
+          error_after: {count: 72, period: hour}
+        tests:
+          - unique_combination_of_columns:
+              arguments: {combination_of_columns: [run_id, source, league_key]}
+        columns:
+          - name: run_id
+            tests: [not_null]
+          - name: source
+            tests: [not_null]
+          - name: ts_utc
+            tests: [not_null]
+
+      - name: snapshot_roster
+        description: >
+          One row per season x week x snapshot slot x league x player. My roster at decision time.
+          Season, week, slot and league come from the file path
+          (state/snapshots/<season>/w<week>/<slot>/<league>/roster.csv).
+        meta:
+          external_location: "read_csv('{{ env_var('FANTASY_SEASON_DIR', '../fantasy-season') }}/state/snapshots/*/*/*/*/roster.csv', header=true, nullstr='NA', union_by_name=true, filename=true)"
+        columns:
+          - name: player_key
+            tests: [not_null]

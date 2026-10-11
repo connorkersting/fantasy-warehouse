@@ -1,0 +1,273 @@
+version: 2
+
+# Marts: full coverage. Grain unique + not_null, relationships on every foreign key,
+# accepted_values on every enum column. Contracts pin each output's columns and types.
+
+models:
+  - name: dim_league
+    description: "Grain: one row per league."
+    config:
+      contract: {enforced: true}
+    columns:
+      - name: league_key
+        data_type: varchar
+        tests: [unique, not_null]
+      - name: league_name
+        data_type: varchar
+        tests: [not_null]
+      - name: platform
+        data_type: varchar
+        tests:
+          - accepted_values:
+              arguments: {values: [espn, sleeper]}
+      - name: is_enabled
+        data_type: boolean
+        tests: [not_null]
+
+  - name: dim_player
+    description: "Grain: one row per player_key. Players seen only in replay errors have no name."
+    config:
+      contract: {enforced: true}
+    columns:
+      - name: player_key
+        data_type: varchar
+        tests: [unique, not_null]
+      - name: player_key_type
+        data_type: varchar
+        tests:
+          - accepted_values:
+              arguments: {values: [gsis, espn, sleeper, name, dst]}
+      - name: player_name
+        data_type: varchar
+      - name: position
+        data_type: varchar
+        tests:
+          - accepted_values:
+              arguments: {values: [QB, RB, WR, TE, K, DST]}
+      - name: pro_team
+        data_type: varchar
+      - name: last_seen_season
+        data_type: integer
+      - name: last_seen_week
+        data_type: integer
+      - name: is_on_roster_snapshot
+        data_type: boolean
+        tests: [not_null]
+
+  - name: fct_lineup_outcome
+    description: "Grain: league x season x week x snapshot slot."
+    config:
+      contract: {enforced: true}
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [league_key, season, week, snapshot_slot]}
+    columns:
+      - name: league_key
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_league'), field: league_key}
+      - name: season
+        data_type: integer
+        tests: [not_null]
+      - name: week
+        data_type: integer
+        tests: [not_null]
+      - name: snapshot_slot
+        data_type: varchar
+        tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [startsit, early, waivers]}
+      - {name: recommended_pts, data_type: double}
+      - {name: platform_pts, data_type: double}
+      - {name: hindsight_pts, data_type: double}
+      - {name: baseline_pts, data_type: double}
+      - {name: points_left_on_bench, data_type: double}
+      - {name: vs_platform_pts, data_type: double}
+      - {name: baseline_gap_pts, data_type: double}
+      - {name: hindsight_capture_rate, data_type: double}
+      - {name: n_missing, data_type: integer}
+      - {name: n_platform_missing, data_type: integer}
+      - {name: n_illegal, data_type: integer}
+
+  - name: fct_projection_error
+    description: "Grain: league x season x week x snapshot slot x player x projection source."
+    config:
+      contract: {enforced: true}
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [league_key, season, week, snapshot_slot, player_key, projection_source]}
+    columns:
+      - name: league_key
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_league'), field: league_key}
+      - {name: season, data_type: integer, tests: [not_null]}
+      - {name: week, data_type: integer, tests: [not_null]}
+      - name: snapshot_slot
+        data_type: varchar
+        tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [startsit, early, waivers]}
+      - name: player_key
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_player'), field: player_key}
+      - name: projection_source
+        data_type: varchar
+        tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [espn, cbs, consensus]}
+      - name: position
+        data_type: varchar
+        tests:
+          - accepted_values:
+              arguments: {values: [QB, RB, WR, TE, K, DST]}
+      - {name: projected_pts, data_type: double}
+      - {name: actual_pts, data_type: double}
+      - {name: error_pts, data_type: double}
+      - {name: abs_error_pts, data_type: double}
+      - {name: n_missing, data_type: integer}
+      - {name: n_no_actual, data_type: integer}
+
+  - name: fct_source_rank_accuracy
+    description: "Grain: league x season x week x snapshot slot x position x projection source."
+    config:
+      contract: {enforced: true}
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [league_key, season, week, snapshot_slot, position, projection_source]}
+    columns:
+      - name: league_key
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_league'), field: league_key}
+      - {name: season, data_type: integer, tests: [not_null]}
+      - {name: week, data_type: integer, tests: [not_null]}
+      - name: snapshot_slot
+        data_type: varchar
+        tests:
+          - accepted_values:
+              arguments: {values: [startsit, early, waivers]}
+      - name: position
+        data_type: varchar
+        tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [QB, RB, WR, TE, K, DST]}
+      - name: projection_source
+        data_type: varchar
+        description: "Ranking sources differ from projection sources; list from REPLAY_RANK_SOURCE_ORDER in fantasy-season R/replay.R."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [espn, cbs, blend, ecr, fp]}
+      - {name: spearman_rho, data_type: double}
+      - {name: n_players, data_type: integer}
+
+  - name: fct_fetch_health
+    description: "Grain: run x source x league ('global' for league-independent sources)."
+    config:
+      contract: {enforced: true}
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [run_id, source_name, league_key]}
+    columns:
+      - {name: run_id, data_type: varchar, tests: [not_null]}
+      - {name: source_name, data_type: varchar, tests: [not_null]}
+      - name: league_key
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_league'), field: league_key}
+              config: {where: "league_key <> 'global'"}
+      - name: run_slot
+        data_type: varchar
+        tests:
+          - accepted_values:
+              arguments:
+                values: [daily, early, intl, late, mnf, postwaiver, snf, startsit, tnf, waivers, waivers_delta]
+      - {name: fetched_at, data_type: timestamp with time zone, tests: [not_null]}
+      - {name: fetch_date, data_type: date}
+      - {name: is_ok, data_type: boolean}
+      - {name: is_schema_ok, data_type: boolean}
+      - name: health_level
+        data_type: varchar
+        tests:
+          - accepted_values:
+              arguments: {values: [green, yellow, red]}
+      - {name: http_status, data_type: integer}
+      - {name: rows_fetched, data_type: integer}
+      - {name: rows_previous, data_type: integer}
+      - {name: row_delta_pct, data_type: double}
+      - {name: upstream_age_hours, data_type: double}
+      - {name: elapsed_seconds, data_type: double}
+
+  - name: fct_projection_accuracy_by_source
+    description: "Grain: projection source x position, all leagues and weeks pooled (finished games only)."
+    config:
+      contract: {enforced: true}
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [projection_source, position]}
+    columns:
+      - name: projection_source
+        data_type: varchar
+        tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [espn, cbs, consensus]}
+      - name: position
+        data_type: varchar
+        tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [QB, RB, WR, TE, K, DST]}
+      - {name: n_projections, data_type: bigint}
+      - {name: n_players, data_type: bigint}
+      - {name: n_weeks, data_type: bigint}
+      - {name: mae_pts, data_type: double}
+      - {name: mean_error_pts, data_type: double}
+      - {name: rmse_pts, data_type: double}
+
+  - name: fct_advice_by_league_season
+    description: "Grain: league x season x snapshot slot."
+    config:
+      contract: {enforced: true}
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [league_key, season, snapshot_slot]}
+    columns:
+      - name: league_key
+        data_type: varchar
+        tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_league'), field: league_key}
+      - {name: season, data_type: integer, tests: [not_null]}
+      - name: snapshot_slot
+        data_type: varchar
+        tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [startsit, early, waivers]}
+      - {name: n_weeks, data_type: bigint}
+      - {name: total_recommended_pts, data_type: double}
+      - {name: total_platform_pts, data_type: double}
+      - {name: total_hindsight_pts, data_type: double}
+      - {name: total_vs_platform_pts, data_type: double}
+      - {name: avg_vs_platform_pts, data_type: double}
+      - {name: hindsight_capture_rate, data_type: double}
+      - {name: n_weeks_beat_platform, data_type: bigint}
+      - {name: n_weeks_trailed_platform, data_type: bigint}
