@@ -1,0 +1,8 @@
+# No credentials: a local DuckDB file. dbt reads this file from the project directory.
+fantasy_warehouse:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('FANTASY_WAREHOUSE_DB', 'fantasy.duckdb') }}"
+      threads: 4

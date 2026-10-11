@@ -1,0 +1,33 @@
+name: fantasy_warehouse
+version: "0.1.0"
+profile: fantasy_warehouse
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  fantasy_warehouse:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
+    audit:
+      +materialized: incremental
+
+seeds:
+  fantasy_warehouse:
+    leagues:
+      +column_types:
+        league_key: varchar
+        league_name: varchar
+        platform: varchar
+        is_enabled: boolean
+    expected_source_columns:
+      +column_types:
+        source_table: varchar
+        column_name: varchar
+        column_type: varchar
