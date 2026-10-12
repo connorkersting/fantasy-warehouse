@@ -17,6 +17,7 @@ models:
       +materialized: table
     audit:
       +materialized: incremental
+      +full_refresh: false  # `dbt build --full-refresh` must not erase the reconciliation history
 
 seeds:
   fantasy_warehouse:
@@ -26,8 +27,3 @@ seeds:
         league_name: varchar
         platform: varchar
         is_enabled: boolean
-    expected_source_columns:
-      +column_types:
-        source_table: varchar
-        column_name: varchar
-        column_type: varchar

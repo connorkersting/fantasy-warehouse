@@ -1,0 +1,84 @@
+version: 2
+
+# Staging: grain tests only (not_null + unique on the grain). Source-level tests aren't repeated here.
+models:
+  - name: stg_replay__lineups
+    description: "Grain: league x season x week x snapshot slot."
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [league_key, season, week, snapshot_slot]}
+    columns:
+      - name: league_key
+        tests: [not_null]
+      - name: season
+        tests: [not_null]
+      - name: week
+        tests: [not_null]
+      - name: snapshot_slot
+        tests: [not_null]
+
+  - name: stg_replay__proj_error
+    description: "Grain: league x season x week x snapshot slot x player x projection source."
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [league_key, season, week, snapshot_slot, player_key, projection_source]}
+    columns:
+      - name: league_key
+        tests: [not_null]
+      - name: season
+        tests: [not_null]
+      - name: week
+        tests: [not_null]
+      - name: snapshot_slot
+        tests: [not_null]
+      - name: player_key
+        tests: [not_null]
+      - name: projection_source
+        tests: [not_null]
+
+  - name: stg_replay__rank_accuracy
+    description: "Grain: league x season x week x snapshot slot x position x projection source."
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [league_key, season, week, snapshot_slot, position, projection_source]}
+    columns:
+      - name: league_key
+        tests: [not_null]
+      - name: season
+        tests: [not_null]
+      - name: week
+        tests: [not_null]
+      - name: snapshot_slot
+        tests: [not_null]
+      - name: position
+        tests: [not_null]
+      - name: projection_source
+        tests: [not_null]
+
+  - name: stg_health__fetch_log
+    description: "Grain: run x source x league ('global' for league-independent sources)."
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [run_id, source_name, league_key]}
+    columns:
+      - name: run_id
+        tests: [not_null]
+      - name: source_name
+        tests: [not_null]
+      - name: league_key
+        tests: [not_null]
+
+  - name: stg_snapshots__roster
+    description: "Grain: league x season x week x snapshot slot x player."
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [league_key, season, week, snapshot_slot, player_key]}
+    columns:
+      - name: league_key
+        tests: [not_null]
+      - name: season
+        tests: [not_null]
+      - name: week
+        tests: [not_null]
+      - name: snapshot_slot
+        tests: [not_null]

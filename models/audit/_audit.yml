@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: audit_reconciliation
+    description: >
+      Grain: one row per dbt invocation x reconciled table. Append-only history of source-vs-mart
+      row counts and summed measures; assert_reconciliation_balances fails on any delta in the latest run.
+    tests:
+      - unique_combination_of_columns:
+          arguments: {combination_of_columns: [invocation_id, table_name]}
+    columns:
+      - name: invocation_id
+        tests: [not_null]
+      - name: table_name
+        tests:
+          - not_null
+          - accepted_values:
+              arguments: {values: [fct_lineup_outcome, fct_projection_error, fct_source_rank_accuracy, fct_fetch_health]}
