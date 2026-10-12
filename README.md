@@ -6,7 +6,7 @@ questions the assistant's own reports can't: **which projection source is actual
 
 ## Problem
 
-The upstream project (fantasy-season, an R pipeline on a GitHub Actions schedule, 4 leagues, ~11 runs a
+The upstream project (fantasy-football, an R pipeline on a GitHub Actions schedule, 4 leagues, ~11 runs a
 week) writes its results as hundreds of CSV and JSON files: decision snapshots, replayed lineups scored after
 the games, projection errors, rank accuracy, and a fetch health log. Each run overwrites `latest.*` files, so
 there was no queryable history, no cross-week accuracy view, and no check that the files keep the shape the
@@ -15,7 +15,7 @@ code expects. Schema contracts existed for only one of its sources.
 ## Approach
 
 - **Read in place, never copy.** dbt-duckdb reads the CSVs straight from the upstream repo through
-  `read_csv` sources (`FANTASY_SEASON_DIR`). The upstream data includes private league payloads and licensed
+  `read_csv` sources (`FANTASY_FOOTBALL_DIR`). The upstream data includes private league payloads and licensed
   rankings, so none of it is committed here.
 - **Layers:** 5 `stg_` views (rename and cast only, grain stated in each file), then 2 `dim_` and 6 `fct_`
   tables. Two of the facts are aggregates that answer the questions above.
@@ -88,8 +88,8 @@ over the platform default, which points work at the projections rather than the 
 
 ## Run it
 
-Requires [uv](https://docs.astral.sh/uv/) and a checkout of fantasy-season next to this repo (or set
-`FANTASY_SEASON_DIR`).
+Requires [uv](https://docs.astral.sh/uv/) and a checkout of fantasy-football next to this repo (or set
+`FANTASY_FOOTBALL_DIR`).
 
 ```bash
 uv sync

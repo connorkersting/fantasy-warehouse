@@ -168,7 +168,7 @@ models:
               arguments: {values: [QB, RB, WR, TE, K, DST]}
       - name: projection_source
         data_type: varchar
-        description: "Ranking sources differ from projection sources; list from REPLAY_RANK_SOURCE_ORDER in fantasy-season R/replay.R."
+        description: "Ranking sources differ from projection sources; list from REPLAY_RANK_SOURCE_ORDER in fantasy-football R/replay.R."
         tests:
           - not_null
           - accepted_values:
