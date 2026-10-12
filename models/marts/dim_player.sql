@@ -18,9 +18,15 @@ latest_roster_row AS (
         season,
         week,
     FROM roster
+    -- Most recent snapshot first. Within an NFL week the slots run in schedule order: waivers (Tue),
+    -- startsit (Sat), early (Sun). league_key breaks the remaining ties so rebuilds pick the same row.
     QUALIFY ROW_NUMBER() OVER (
         PARTITION BY player_key
-        ORDER BY season DESC, week DESC, snapshot_slot
+        ORDER BY
+            season DESC,
+            week DESC,
+            CASE snapshot_slot WHEN 'early' THEN 3 WHEN 'startsit' THEN 2 WHEN 'waivers' THEN 1 ELSE 0 END DESC,
+            league_key
     ) = 1
 ),
 

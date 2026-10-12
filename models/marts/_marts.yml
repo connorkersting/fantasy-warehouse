@@ -157,6 +157,7 @@ models:
       - name: snapshot_slot
         data_type: varchar
         tests:
+          - not_null
           - accepted_values:
               arguments: {values: [startsit, early, waivers]}
       - name: position
@@ -263,6 +264,7 @@ models:
           - accepted_values:
               arguments: {values: [startsit, early, waivers]}
       - {name: n_weeks, data_type: bigint}
+      - {name: n_weeks_evaluable, data_type: bigint, description: "Weeks with recommended, platform and hindsight points all known; every total and rate uses only these."}
       - {name: total_recommended_pts, data_type: double}
       - {name: total_platform_pts, data_type: double}
       - {name: total_hindsight_pts, data_type: double}

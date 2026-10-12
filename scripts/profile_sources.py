@@ -4,7 +4,7 @@ from pathlib import Path
 
 import duckdb
 
-root = Path(sys.argv[1] if len(sys.argv) > 1 else "../fantasy-season").resolve().as_posix()
+root = Path(sys.argv[1] if len(sys.argv) > 1 else "../fantasy-season").resolve().as_posix().replace("'", "''")  # escape for SQL
 con = duckdb.connect()
 
 SOURCES = {

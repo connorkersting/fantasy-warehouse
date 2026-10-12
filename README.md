@@ -23,22 +23,39 @@ code expects. Schema contracts existed for only one of its sources.
   - Every model declares its grain and tests it (unique + not_null). Marts also test every foreign key
     (`relationships`) and every enum column (`accepted_values`).
   - **Enforced dbt contracts** pin each mart's output columns and types.
-  - **Source schema contract:** every upstream column and type is pinned in
-    `seeds/expected_source_columns.csv` (72 columns, 5 sources). `tests/assert_source_columns_match_contract.sql`
-    fails on a new, dropped or retyped column, names the source, the column, what was expected and what
-    arrived, and `dbt build` then skips everything downstream.
-  - **Reconciliation:** `audit_reconciliation` (incremental, unique key = invocation x table) logs source vs
-    mart row counts and a summed measure on every run; a test fails on any delta.
-  - **Freshness** on the health log (warn after 26 h, error after 72 h; the pipeline runs daily).
+  - **Source schema contract:** every upstream column, type and position is pinned in
+    `contracts/source_columns.csv` (72 columns, 5 sources). Each source has its own
+    `matches_source_contract` test (`macros/source_contract.sql`), so a failure skips exactly that source's
+    descendants in `dbt build`. It fails on a new, dropped or retyped column, **and on any single file whose
+    header differs** (the weekly files are unioned by name, which would otherwise fill a dropped column with
+    NULLs). Each failing row names the source, the file, the column, what was expected and what arrived.
+  - **Reconciliation:** `audit_reconciliation` (incremental, unique key = invocation x table,
+    `full_refresh: false` so history survives `--full-refresh`) logs source vs mart row counts and a summed
+    measure on every run. A test requires a balanced row for all four marts **from the current invocation**,
+    so run it through `dbt build`.
+  - **Derived metrics, checked upstream:** accuracy metrics compute error as actual − projected, and a test
+    checks that the upstream error column agrees.
+  - **Freshness** on the health log (warn after 26 h, error after 72 h; the pipeline runs daily). Run
+    `dbt source freshness` separately: `dbt build` doesn't run it.
 - **Idempotent:** marts are full rebuilds; the only incremental model has a real `unique_key`.
 
 ## Results (data through week 4 of 2026, snapshot 2026-10-11)
 
-`dbt build`: **113 nodes, all pass**. Rerun on the same data: byte-identical marts.
+`dbt build`: **137 nodes, all pass**. Rerun on the same data: byte-identical marts.
 
-**Guard rails, tested by breaking the data on purpose** (a copy with an extra upstream column and one
-duplicated row): the build failed on the contract test (`health_log.new_col: expected none, arrived VARCHAR,
-new column`) and on the source grain test, and skipped all 27 downstream nodes.
+**Guard rails, tested by breaking a copy of the data on purpose:**
+- A new column in the health log failed that source's contract
+  (`health_log.new_col: expected none, arrived VARCHAR, new column`) and skipped the health models, while
+  unaffected sources still built.
+- Dropping `recommended_pts` from one weekly lineup file (`w2_lineups.csv`) was caught only by the per-file
+  header check, which named the file. The combined read would have loaded that week's points as NULL.
+- A duplicated lineup row failed the source grain test.
+- `--full-refresh` kept the reconciliation history; a standalone `dbt test` of the reconciliation fails by
+  design (no rows for that invocation).
+
+An adversarial review (OpenAI Codex) of the first version found that a single contract test with several
+parents didn't block each source's descendants; reproduced, then fixed with per-source tests. The review's
+10 findings and their fixes are listed in the "Fix adversarial-review findings" commit message.
 
 **Projection accuracy** (`fct_projection_accuracy_by_source`, 553 player-weeks with finished games):
 
@@ -92,6 +109,9 @@ The warehouse file is `fantasy.duckdb` (git-ignored; override with `FANTASY_WARE
   package: one fewer dependency.
 - **The contract test reads `DESCRIBE` on the live source** instead of pinning types in `read_csv`: explicit
   column lists in `read_csv` map by position, so a renamed column would load silently into the wrong field.
+- **One contract test per source, reading the contract file directly** (not a seed via `ref()`): in
+  `dbt build`, a failing test only blocks nodes that descend from all of its parents, so one shared test
+  over five sources and a seed blocked nothing.
 - **Ranking and projection sources are separate enums** (`espn, cbs, blend, ecr, fp` vs
   `espn, cbs, consensus`). The accepted-values test caught that on the first build.
 - **DuckDB pinned below 2.0** until dbt-duckdb supports it.

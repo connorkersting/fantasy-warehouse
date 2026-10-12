@@ -25,6 +25,12 @@ models:
     columns:
       - name: league_key
         tests: [not_null]
+      - name: season
+        tests: [not_null]
+      - name: week
+        tests: [not_null]
+      - name: snapshot_slot
+        tests: [not_null]
       - name: player_key
         tests: [not_null]
       - name: projection_source
@@ -36,6 +42,14 @@ models:
       - unique_combination_of_columns:
           arguments: {combination_of_columns: [league_key, season, week, snapshot_slot, position, projection_source]}
     columns:
+      - name: league_key
+        tests: [not_null]
+      - name: season
+        tests: [not_null]
+      - name: week
+        tests: [not_null]
+      - name: snapshot_slot
+        tests: [not_null]
       - name: position
         tests: [not_null]
       - name: projection_source
@@ -47,6 +61,10 @@ models:
       - unique_combination_of_columns:
           arguments: {combination_of_columns: [run_id, source_name, league_key]}
     columns:
+      - name: run_id
+        tests: [not_null]
+      - name: source_name
+        tests: [not_null]
       - name: league_key
         tests: [not_null]
 
