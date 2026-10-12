@@ -2,7 +2,7 @@
 
 Run this only deliberately, after reviewing an upstream schema change that a matches_source_contract test
 reported:
-    uv run python scripts/pin_source_schema.py [path-to-fantasy-season]
+    uv run python scripts/pin_source_schema.py [path-to-fantasy-football]
 The globs and read_csv options must match the external_location entries in models/staging/_sources.yml.
 """
 import csv
@@ -12,7 +12,7 @@ from pathlib import Path
 
 import duckdb
 
-ROOT = Path(sys.argv[1] if len(sys.argv) > 1 else os.environ.get("FANTASY_SEASON_DIR", "../fantasy-season")).resolve()
+ROOT = Path(sys.argv[1] if len(sys.argv) > 1 else os.environ.get("FANTASY_FOOTBALL_DIR", "../fantasy-football")).resolve()
 ROOT_SQL = ROOT.as_posix().replace("'", "''")  # escape for a SQL string literal
 OPTS = "header=true, nullstr='NA', filename=true"
 SOURCES: dict[str, str] = {

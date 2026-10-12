@@ -1,11 +1,11 @@
 # fantasy-warehouse
 
-dbt-duckdb warehouse that reads the fantasy-season (football) pipeline's CSV outputs in place. README.md
+dbt-duckdb warehouse that reads the fantasy-football (football) pipeline's CSV outputs in place. README.md
 has the problem, layers, results and decisions; read it before changing models. Football only: fantasy
 basketball work lives in `C:\dev\fantasy-basketball`, with its own rules.
 
 ## Hard rules
-- **fantasy-season is read-only from here.** Never edit, commit, pull or fetch in it from a warehouse
+- **fantasy-football is read-only from here.** Never edit, commit, pull or fetch in it from a warehouse
   session. Ask Connor to pull if the data looks stale.
 - **No upstream data in this repo or outside the machine.** It holds private league payloads and licensed
   rankings: never commit it, never paste rows into PRs/issues, never send it to Codex or any other service.
@@ -19,12 +19,12 @@ basketball work lives in `C:\dev\fantasy-basketball`, with its own rules.
 ## Commands (run from the repo root; uv manages .venv)
 - `uv run dbt build`: the full gate. The reconciliation test only passes inside `dbt build` (it needs
   rows from the current invocation), so a standalone `dbt test` on it fails by design.
-- `uv run dbt source freshness`: not part of build. It measures the local fantasy-season checkout, so a
+- `uv run dbt source freshness`: not part of build. It measures the local fantasy-football checkout, so a
   stale result may mean "not pulled", not "pipeline down": check the upstream's latest commit first.
 - `uv run python scripts/profile_sources.py`: grain/enum profile before adding a model or test.
 - Read-only contract check without touching the warehouse: DESCRIBE each source in an in-memory DuckDB
   and diff against `contracts/source_columns.csv` plus each file's header (same logic as the macro).
-- Upstream location: `FANTASY_SEASON_DIR` (default `../fantasy-season`); warehouse file:
+- Upstream location: `FANTASY_FOOTBALL_DIR` (default `../fantasy-football`); warehouse file:
   `FANTASY_WAREHOUSE_DB` (default `fantasy.duckdb`). See `.env.example`.
 
 ## Conventions

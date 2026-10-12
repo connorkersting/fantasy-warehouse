@@ -2,7 +2,7 @@
 -- Season, week, slot and league are parsed from the file path:
 -- state/snapshots/<season>/w<week>/<slot>/<league>/roster.csv
 WITH source AS (
-    SELECT * FROM {{ source('fantasy_season', 'snapshot_roster') }}
+    SELECT * FROM {{ source('fantasy_football', 'snapshot_roster') }}
 ),
 
 with_path AS (

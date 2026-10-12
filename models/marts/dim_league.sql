@@ -1,4 +1,4 @@
--- Grain: one row per league. From the leagues seed (mirrors fantasy-season config/leagues.yml).
+-- Grain: one row per league. From the leagues seed (mirrors fantasy-football config/leagues.yml).
 WITH leagues AS (
     SELECT * FROM {{ ref('leagues') }}
 )

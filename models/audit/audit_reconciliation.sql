@@ -7,7 +7,7 @@ WITH lineups_src AS (
     SELECT
         COUNT(*) AS n_rows,
         SUM(CAST(recommended_pts AS DOUBLE)) AS total,
-    FROM {{ source('fantasy_season', 'replay_lineups') }}
+    FROM {{ source('fantasy_football', 'replay_lineups') }}
 ),
 
 lineups_mart AS (
@@ -21,7 +21,7 @@ errors_src AS (
     SELECT
         COUNT(*) AS n_rows,
         SUM(CAST(error AS DOUBLE)) AS total,
-    FROM {{ source('fantasy_season', 'replay_proj_error') }}
+    FROM {{ source('fantasy_football', 'replay_proj_error') }}
 ),
 
 errors_mart AS (
@@ -35,7 +35,7 @@ ranks_src AS (
     SELECT
         COUNT(*) AS n_rows,
         SUM(CAST(n AS DOUBLE)) AS total,
-    FROM {{ source('fantasy_season', 'replay_rank_accuracy') }}
+    FROM {{ source('fantasy_football', 'replay_rank_accuracy') }}
 ),
 
 ranks_mart AS (
@@ -49,7 +49,7 @@ health_src AS (
     SELECT
         COUNT(*) AS n_rows,
         SUM(CAST(rows AS DOUBLE)) AS total,
-    FROM {{ source('fantasy_season', 'health_log') }}
+    FROM {{ source('fantasy_football', 'health_log') }}
 ),
 
 health_mart AS (

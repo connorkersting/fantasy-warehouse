@@ -1,6 +1,6 @@
 -- Grain: one row per league x season x week x snapshot slot x player x projection source.
 WITH source AS (
-    SELECT * FROM {{ source('fantasy_season', 'replay_proj_error') }}
+    SELECT * FROM {{ source('fantasy_football', 'replay_proj_error') }}
 ),
 
 renamed AS (

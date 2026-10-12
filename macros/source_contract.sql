@@ -1,6 +1,6 @@
 {#- Root of the upstream checkout, with apostrophes escaped for use inside a SQL string literal. -#}
-{% macro fantasy_season_root() -%}
-{{ env_var('FANTASY_SEASON_DIR', '../fantasy-season') | replace("'", "''") }}
+{% macro fantasy_football_root() -%}
+{{ env_var('FANTASY_FOOTBALL_DIR', '../fantasy-football') | replace("'", "''") }}
 {%- endmacro %}
 
 
@@ -65,7 +65,7 @@ file_headers AS (
     SELECT
         filename AS file_name,
         replace(replace(split_part(content, chr(10), 1), chr(13), ''), '"', '') AS header,
-    FROM read_text('{{ fantasy_season_root() }}/{{ file_glob }}')
+    FROM read_text('{{ fantasy_football_root() }}/{{ file_glob }}')
 ),
 
 header_drift AS (

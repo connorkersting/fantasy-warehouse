@@ -1,6 +1,6 @@
 -- Grain: one row per league x season x week x snapshot slot (one replayed lineup decision).
 WITH source AS (
-    SELECT * FROM {{ source('fantasy_season', 'replay_lineups') }}
+    SELECT * FROM {{ source('fantasy_football', 'replay_lineups') }}
 ),
 
 renamed AS (

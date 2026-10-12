@@ -1,7 +1,7 @@
 [project]
 name = "fantasy-warehouse"
 version = "0.1.0"
-description = "Tested DuckDB + dbt warehouse over the fantasy-season pipeline outputs: projection accuracy, lineup advice vs platform, pipeline health"
+description = "Tested DuckDB + dbt warehouse over the fantasy-football pipeline outputs: projection accuracy, lineup advice vs platform, pipeline health"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

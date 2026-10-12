@@ -1,6 +1,6 @@
 -- Grain: one row per pipeline run x fetched source x league. Global sources have league_key = 'global'.
 WITH source AS (
-    SELECT * FROM {{ source('fantasy_season', 'health_log') }}
+    SELECT * FROM {{ source('fantasy_football', 'health_log') }}
 ),
 
 renamed AS (
