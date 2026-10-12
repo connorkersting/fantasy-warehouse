@@ -47,6 +47,9 @@ without the other. Keep the sample-size caveats.
 ## Git
 Branch + PR for every change (even solo), plain title, what-and-why body, no Claude attribution.
 Push only to origin (connorkersting/fantasy-warehouse).
+Merge your own PRs right after opening them: `gh pr merge <n> --merge --delete-branch`, then
+`git switch main` and `git pull`. No need to ask first (Connor, 2026-10-12). If the PR has
+failing checks or a merge conflict, stop and tell him instead.
 
 ## Windows notes
 Python can't open paths over 260 chars: keep scratch files at short paths (e.g. `D:\tools\...`) or pipe
