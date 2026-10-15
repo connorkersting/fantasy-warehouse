@@ -6,8 +6,8 @@ questions the assistant's own reports can't: **which projection source is actual
 
 ## Problem
 
-The upstream project (fantasy-football, an R pipeline on a GitHub Actions schedule, 4 leagues, ~11 runs a
-week) writes its results as hundreds of CSV and JSON files: decision snapshots, replayed lineups scored after
+The upstream project (fantasy-football, a private R pipeline on a GitHub Actions schedule, 3 active leagues
+plus one that disbanded, ~11 runs a week) writes its results as hundreds of CSV and JSON files: decision snapshots, replayed lineups scored after
 the games, projection errors, rank accuracy, and a fetch health log. Each run overwrites `latest.*` files, so
 there was no queryable history, no cross-week accuracy view, and no check that the files keep the shape the
 code expects. Schema contracts existed for only one of its sources.
@@ -24,11 +24,13 @@ code expects. Schema contracts existed for only one of its sources.
     (`relationships`) and every enum column (`accepted_values`).
   - **Enforced dbt contracts** pin each mart's output columns and types.
   - **Source schema contract:** every upstream column, type and position is pinned in
-    `contracts/source_columns.csv` (72 columns, 5 sources). Each source has its own
+    `contracts/source_columns.csv` (72 rows across 5 sources: 67 upstream columns plus the `filename`
+    column DuckDB adds to each). Each source has its own
     `matches_source_contract` test (`macros/source_contract.sql`), so a failure skips exactly that source's
     descendants in `dbt build`. It fails on a new, dropped or retyped column, **and on any single file whose
     header differs** (the weekly files are unioned by name, which would otherwise fill a dropped column with
-    NULLs). Each failing row names the source, the file, the column, what was expected and what arrived.
+    NULLs). Each failing row names the source, the column, what was expected and what arrived; a per-file header
+    failure also names the file.
   - **Reconciliation:** `audit_reconciliation` (incremental, unique key = invocation x table,
     `full_refresh: false` so history survives `--full-refresh`) logs source vs mart row counts and a summed
     measure on every run. A test requires a balanced row for all four marts **from the current invocation**,
@@ -40,6 +42,10 @@ code expects. Schema contracts existed for only one of its sources.
 - **Idempotent:** marts are full rebuilds; the only incremental model has a real `unique_key`.
 
 ## Results (data through week 4 of 2026, snapshot 2026-10-11)
+
+No data is committed here, so these numbers can't be reproduced from this repo alone. On 2026-10-15 I rebuilt
+the warehouse against the upstream repo as it stood at the snapshot: `dbt build` passed 137 of 137 nodes, and
+the accuracy table, the 13 replayed decisions and the 86-96% capture range below came out identical.
 
 `dbt build`: **137 nodes, all pass**. Rerun on the same data: byte-identical marts.
 
@@ -88,7 +94,9 @@ over the platform default, which points work at the projections rather than the 
 
 ## Run it
 
-Requires [uv](https://docs.astral.sh/uv/) and a checkout of fantasy-football next to this repo (or set
+The upstream fantasy-football repo is private (it holds league payloads and licensed rankings), so the build
+only runs on my machine. What's here to read is the models, tests, contracts and macros. With access, it needs
+[uv](https://docs.astral.sh/uv/) and a checkout of fantasy-football next to this repo (or set
 `FANTASY_FOOTBALL_DIR`).
 
 ```bash
@@ -115,3 +123,11 @@ The warehouse file is `fantasy.duckdb` (git-ignored; override with `FANTASY_WARE
 - **Ranking and projection sources are separate enums** (`espn, cbs, blend, ecr, fp` vs
   `espn, cbs, consensus`). The accepted-values test caught that on the first build.
 - **DuckDB pinned below 2.0** until dbt-duckdb supports it.
+
+## Who built what
+
+Claude Code wrote the models, macros, tests and scripts on 2026-10-11, and Codex reviewed that first version.
+I didn't hand-write the SQL. My part was the two questions and the rules the build has to enforce, which come
+from data-quality standards I wrote for all my projects: a declared grain on every model, a pinned source
+contract that fails loudly on drift, and reconciliation logged on every run. `CLAUDE.md` holds the standing
+instructions the agent works under.
