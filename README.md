@@ -47,7 +47,7 @@ No data is committed here, so these numbers can't be reproduced from this repo a
 the warehouse against the upstream repo as it stood at the snapshot: `dbt build` passed 137 of 137 nodes, and
 the accuracy table, the 13 replayed decisions and the 86-96% capture range below came out identical.
 
-`dbt build`: **137 nodes, all pass**. Rerun on the same data: byte-identical marts.
+`dbt build` on the 2026-10-11 snapshot: **137 nodes, all pass**. Rerun on the same data: byte-identical marts.
 
 **Guard rails, tested by breaking a copy of the data on purpose:**
 - A new column in the health log failed that source's contract
